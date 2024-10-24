@@ -18,14 +18,26 @@ repositories {
 }
 
 dependencies {
-
+    //Other dependencies
     testImplementation 'org.testng:testng:6.9.10'
+    testImplementation 'io.github.bonigarcia:webdrivermanager:5.6.0'
+    testImplementation 'org.testng:testng:7.4.0'
 
     // https://mvnrepository.com/artifact/org.seleniumhq.selenium/selenium-java
     implementation 'org.seleniumhq.selenium:selenium-java:4.21.0'
+    // implementation 'org.seleniumhq.selenium:selenium-devtools-v130:4.21.0'
     implementation 'org.apache.poi:poi-ooxml:4.1.2'
-
+    implementation 'ch.qos.logback:logback-classic:1.2.3'
 }
+
+    
+
+// Checkstyle configuration (if needed)
+checkstyle {
+    toolVersion '10.3'
+    configFile file('config/checkstyle/checkstyle.xml')
+}
+
 
 buildDir = 'build'
 
