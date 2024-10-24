@@ -1,210 +1,236 @@
 package demo.wrappers;
 
+import org.checkerframework.checker.units.qual.t;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
+
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import java.util.ArrayList;
 import java.time.Duration;
+import java.util.List;
 
 public class Wrappers {
-    /*
-     * Write your selenium wrappers here
-     */
-    ChromeDriver driver;
-    WebDriverWait wait;
+    WebDriver driver;
+    String url = "https://www.youtube.com";
 
-    // Constructor of Wrappers class
-    public Wrappers(ChromeDriver driver, WebDriverWait wait) {
-        this.driver = driver;
-        this.wait = wait;
+
+    public Wrappers(WebDriver driver){
+        this.driver= driver;
     }
 
-    // Open 'YouTube' url
-    public void openUrl() {
-        driver.get("https://www.youtube.com/");
+
+    public void navigateToHome() {
+        if (!this.driver.getCurrentUrl().equals(url)) {
+            this.driver.get(url);
+        }
     }
 
-    // Click on an element
-    public void click(WebElement element) {
-        element.click();
+    public void getAboutlink(){
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(40));
+        WebElement about=wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//a[text()='About']")));
+        about.click();
     }
 
-    // Send message on an element with
-    public void sendKeys(WebElement element, String message) {
-        element.sendKeys(message);
+    public void getMessage(){
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(40));
+        WebElement message =wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("content")));
+        System.out.println("Message at About page is :" + message.getText());
     }
 
-    // Get the current url of web page
-    public String getUrl() {
-        return driver.getCurrentUrl();
+    public void getTab(String tab) throws InterruptedException{
+         // Click on the "Movies" tab (you may need to adjust the selector)
+            Thread.sleep(3000);
+            WebElement tabName = driver.findElement(By.xpath("//a[contains(@title,'"+tab+"')]"));
+            tabName.click();
+            System.out.println("Successfuly clicked on : "+tab+" Tab");
     }
 
-    // Scroll to a particular element using java script executor
-    public void scrollTO(WebElement element) {
-        JavascriptExecutor js = (JavascriptExecutor) driver;
-        js.executeScript("arguments[0].scrollIntoView();", element);
+    public void getSection(String sectionName){
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        WebElement section = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(".//span[@id='title' and contains(text(),'"+sectionName+"')]")));
+        JavascriptExecutor js = (JavascriptExecutor)driver;
+        js.executeScript("arguments[0].scrollIntoView();", section);
     }
 
-    // Locate an element using wait, xpath and Expected Conditions of
-    // visibilityOfElementLocated
-    public WebElement findElementVisi(String xpath) {
-        return wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath)));
+
+    public String[] getMovieRatingAndCategory() throws InterruptedException{
+    // Wait for the section to load and find movie items
+         Thread.sleep(3000);
+        List<WebElement> movies=driver.findElements(By.xpath("//ytd-grid-movie-renderer"));
+        //find rating
+        int size = movies.size()-1;
+        WebElement rating = driver.findElement(By.xpath("//ytd-grid-movie-renderer["+size+"]/ytd-badge-supported-renderer/div[2]"));
+        String movieRating = rating.getAttribute("aria-label");
+
+        //find category 
+        WebElement category=driver.findElement(By.xpath("//ytd-grid-movie-renderer["+size+"]//span[@class='grid-movie-renderer-metadata style-scope ytd-grid-movie-renderer']"));
+        String movieCategory = category.getText();
+        String[] ratingCategory = new String[2];  
+        ratingCategory[0]=movieRating;
+        ratingCategory[1]=movieCategory;
+
+        return ratingCategory;   
     }
 
-    // Locate an element using wait, xpath and Expected Conditions of
-    // presenceOfElementLocated
-    public WebElement findElementPres(String xpath) {
-        return wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(xpath)));
-    }
 
-    // Locate an element using max required wait, xpath and Expected Conditions of
-    // visibilityOfElementLocated
-    public WebElement findElementVisi(String xpath, int waitTime) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(waitTime));
-        return wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath)));
-    }
-
-    // Locate an element using max required wait, xpath and Expected Conditions of
-    // presenceOfElementLocated
-    public WebElement findElementPres(String xpath, int waitTime) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(waitTime));
-        return wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(xpath)));
-    }
-
-    // Seperating Starting Integer from String
-    public int intFromString(String intString) {
-        int a = 0;
-        String b = "0123456789";
-        for (int i = 0; i < intString.length(); i++) {
-            if (!b.contains(String.valueOf(intString.charAt(i)))) {
-                break;
+    public boolean scrollToRight(String topSection){
+        Boolean status;
+        try{ 
+        Thread.sleep(3000);        
+        List<WebElement> sections=driver.findElements(By.xpath("//div[@id='dismissible']//span[@id='title']"));
+        //System.out.println("Section size is:" + sections.size());
+        for(WebElement section: sections) {
+            int count=1;
+           // System.out.println("Section Name is :" +section.getText());
+            if(section.getText().contains(topSection)){       
+                List<WebElement> nextBtn = section.findElements(By.xpath("//button[@aria-label='Next']"));
+                //System.out.println("Button count is: "+ nextBtn.size());
+                for(int i=0;i<=count;i++){
+                     while(nextBtn.get(i).isDisplayed()) {
+                         JavascriptExecutor js = (JavascriptExecutor)driver;
+                         js.executeScript("arguments[0].click();",nextBtn.get(i));
+                     }
             }
-            a++;
+                 count++;
         }
-        return Integer.parseInt(intString.substring(0, a));
+    }  
+             status=true;
+        }catch(Exception e){
+            //System.out.println("Exception occurred :");
+            //e.printStackTrace();
+            status=false;
+        }
+        return status;
     }
 
-    // Getting the Title, Body and number of likes in News cards
-    public void getNewsTitleBodyLike(int n) {
+    public int getTitleAndTrackCount(){
+        int trackCount=0;
+        try{
+       List<WebElement> playlistCount= driver.findElements(By.xpath("//ytd-item-section-renderer[1]//ytd-compact-station-renderer"));
+       int size= playlistCount.size();
+       String title= driver.findElement(By.xpath("//ytd-item-section-renderer[1]//ytd-compact-station-renderer["+size+"]/div[1]/a[1]/h3")).getText();
+       System.out.println("Title of playlist is " + title);
+     
+        WebElement counts = driver.findElement(By.xpath("//ytd-item-section-renderer[1]//ytd-compact-station-renderer["+size+"]/div[1]/a[1]/p[normalize-space(@id='video-count-text')]"));
+        String count= counts.getText();
+        trackCount=Integer.parseInt(count.split(" ")[0]);
+        System.out.println("Track count is: "+ trackCount); 
 
-        // Ittereating through the number of new card(n) given
-        for (int i = 1; i <= n; i++) {
+        }   catch(Exception e){
+                System.out.println("Exception occurred");
+                e.printStackTrace();
+     }
+        return trackCount;
+    }
 
-            // Locating the title webelement
-            WebElement titleBody = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(
-                    "//span[text()='Latest news posts']/ancestor::div[@id='dismissible']//ytd-rich-item-renderer[" + i
-                            + "]")));
 
-            // Storing the sub webelements which have title, descriptions from the parent
-            // titleBody webelement
-            ArrayList<WebElement> allDescriptions = new ArrayList<>(
-                    titleBody.findElements(By.xpath(".//span[@dir='auto']")));
+ 
 
-            // Creating StringBuilder object
-            StringBuilder sb = new StringBuilder();
 
-            // Itterating through all stored webelemnt
-            for (WebElement webElement : allDescriptions) {
+    public void getNewsTitleLikeCountAndBody(){
+        int likeCount = 0;  
+        int totalLikes=0;  
+        List<WebElement> newsList = driver.findElements(By.xpath("//ytd-rich-section-renderer[2]//ytd-rich-item-renderer"));
 
-                // Getting the text and appending to a StringBuilder object
-                sb.append(webElement.getText() + " ");
+        for(int i = 0; i < Math.min(newsList.size(), 3); i++){
+            WebElement news = newsList.get(i);
+            String newsTitle = news.findElement(By.xpath(".//a[@id='author-text']/span")).getText();
+            String newsBody  = news.findElement(By.xpath(".//div[@id='body']")).getText();
+
+            //Print Title and body
+            System.out.println("News Title is  : " + newsTitle);
+            System.out.println("News Body is   : " + newsBody);
+            
+            WebElement newsLikes = null;
+            try{
+                newsLikes= news.findElement(By.xpath(".//span[contains(@aria-label,'like')]"));
+                if(newsLikes.getAttribute("aria-label").equals("")){
+                    likeCount = 0;
+                }else {
+                    likeCount = Integer.parseInt(newsLikes.getAttribute("aria-label").split(" ")[0]);
+                }
+            }catch(NoSuchElementException e){
+                System.out.println("Element not found with either XPath.");
+                likeCount =0;
             }
-
-            // Converting the StringBuilder object to String
-            String titleBodyString = sb.toString();
-
-            // Locating the like count
-            WebElement like = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(
-                    "//span[text()='Latest news posts']/ancestor::div[@id='dismissible']//ytd-rich-item-renderer[" + i
-                            + "]//span[@id='vote-count-middle']")));
-
-            // Getting the like count as String
-            String likeString = like.getText();
-
-            // If like count String is empty then taking it as 0
-            if (likeString.equals(""))
-                likeString = "0";
-
-            // Printing all the data
-            System.out.println("News " + i + " : " + titleBodyString + "\n" + "Likes : " + likeString);
+             totalLikes = totalLikes + likeCount;
+        }      
+             //Print Total like count
+           System.out.println("Total Likes counts is : " + totalLikes);
         }
+ 
+ 
+    public void searchResult(String searchName) throws InterruptedException{
+        WebElement searchBox = driver.findElement(By.name("search_query"));
+        searchBox.sendKeys(Keys.CONTROL+"a");
+        searchBox.sendKeys(Keys.DELETE);
+        searchBox.sendKeys(searchName);
+
+        WebElement searchButton = driver.findElement(By.xpath("//button[@aria-label='Search']"));
+        searchButton.click();
+        System.out.println("Successfully performed search for "+ searchName);
+        Thread.sleep(3000);
+        }
+
+    public void getViewsCount(String sectionName) throws InterruptedException{
+      // Total views count
+      long totalViews = 0;
+         // Scroll until total views reach 10 crore
+         while (totalViews < 100000000) {
+             // Wait for results to load
+             Thread.sleep(2000);
+            
+             // Find video elements
+             List <WebElement> viewCounts = driver.findElements(By.xpath("//div[@id='metadata-line']/span[contains(text(),'views')]"));
+             
+             for (WebElement view : viewCounts) {
+                 // Extract view count
+                 String viewsText = view.getText().split(" ")[0];
+                 long views = parseViewCount(viewsText);
+                 totalViews += views;
+
+                 // Break if we've reached 10 crore
+                 if (totalViews >= 10000000) {
+                     break;
+                 }
+             }
+             // Scroll down
+             ((JavascriptExecutor) driver).executeScript("window.scrollBy(0,1000);");
+             
+         }
+         System.out.println("Total views reached: " + totalViews + "for " + sectionName);
+
     }
 
-    // Searching for given text
-    public void search(String text) {
-        WebElement searchBar = wait
-                .until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@id='search']")));
-        searchBar.sendKeys(text);
-        searchBar.sendKeys(Keys.ENTER);
-    }
-
-    // Scrolling until total view count of videos is greater than or equal to the
-    // targetViewCount
-    public void viewCount(long targetViewCount) throws InterruptedException {
-        long totalViewCount = 0;
-        int totalElementRendered = 0;
-
-        while (totalViewCount < targetViewCount) {
-
-            // Waiting for the view count webelement
-            wait.until(ExpectedConditions
-                    .presenceOfElementLocated(
-                            By.xpath("(//ytd-video-renderer//span[contains(text(),'views')])[position() > "
-                                    + totalElementRendered + "]")));
-
-            // Locating and storing the view count webelement
-            ArrayList<WebElement> views = new ArrayList<>(
-                    driver.findElements(By.xpath("(//ytd-video-renderer//span[contains(text(),'views')])[position() >"
-                            + totalElementRendered + "]")));
-
-            // Converting the view count from K, lakh, crore, M, B into digit and adding to
-            // totalViewCount
-            for (WebElement element : views) {
-
-                // Getting the view count as String
-                String viewString = element.getText();
-
-                // Getting the Integer part from the String
-                double count = intViewCountSeperator(viewString);
-
-                if (viewString.contains("K"))
-                    count = count * 1000;
-                else if (viewString.contains("lakh"))
-                    count *= 100000;
-                else if (viewString.contains("crore"))
-                    count *= 10000000;
-                else if (viewString.contains("M"))
-                    count *= 1000000;
-                else if (viewString.contains("B"))
-                    count *= 1000000000;
-
-                totalViewCount = totalViewCount + (long) count;
-            }
-
-            if (totalViewCount >= targetViewCount)
-                return;
-
-            // Storing the last position of rendered
-            totalElementRendered = views.size();
-
-            // Scrolling to the last views element so that new section can render
-            scrollTO(views.get(totalElementRendered - 1));
+     // Method to parse view count from string
+     public static long parseViewCount(String input) {
+        // Remove any whitespace and convert to Upper case for easier matching
+        input = input.trim().toUpperCase();        
+        // Determine the multiplier based on the suffix
+        long multiplier = 1;
+        if (input.endsWith("M")) {
+            multiplier = 1000000;
+            input = input.replace("M", "").trim();
+        } else if (input.endsWith("B")) {
+            multiplier = 1000000000;
+            input = input.replace("B", "").trim();
+        } else if (input.endsWith("K")) {
+            multiplier = 1000;
+            input = input.replace("K", "").trim();
         }
-    }
 
-    // Seperating the Integer part from the view count
-    public double intViewCountSeperator(String viewString) {
-        int i = 0;
-        for (i = 0; i < viewString.length(); i++) {
-            if ("0123456789.".contains(Character.toString(viewString.charAt(i))))
-                continue;
-            else
-                break;
-        }
-        return Double.parseDouble(viewString.substring(0, i));
+        // Parse the numeric part
+        double numericValue = Double.parseDouble(input);
+        
+        // Multiply to get the final long value
+        return (long) (numericValue * multiplier);
     }
 }
+
+           
+
+          
