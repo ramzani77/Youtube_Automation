@@ -228,7 +228,70 @@ public class TestCases extends ExcelDataProvider { // Lets us read the data
                 System.out.println("End of testCase04");
         }
 
-      
+        /*
+         * Search for each of the items given in the stubs:
+         * src/test/resources/data.xlsx, and keep scrolling till the sum of each video’s
+         * views reach 10 Cr.
+         */
+        @Test(enabled = true, dataProvider = "excelData")
+        public void testCase05(String text) throws InterruptedException {
+                try {
+                        System.out.println("Start of testCase05");
+
+                        // Opening 'YouTube' url
+                        wp.openUrl();
+
+                        // Asserting that 'YouTube' url is opened
+                        Assert.assertEquals(wp.getUrl(), "https://www.youtube.com/", "Url Verification Failed");
+
+                        // Searching for text provided by the dataProvider
+                        wp.search(text);
+
+                        // Scrolling until total view count of videos is greater than or equal to the
+                        // targetViewCount
+                        wp.viewCount(100000000);
+
+                        System.out.println("testCase05 Passed");
+
+                } catch (Exception e) {
+                        System.out.println("testCase05 Failed");
+                }
+
+                System.out.println("End of testCase05");
+        }
+
+        @BeforeTest
+        public void startBrowser() {
+                System.setProperty("java.util.logging.config.file", "logging.properties");
+
+                // Creating object of ChromeOptions class
+                ChromeOptions options = new ChromeOptions();
+
+                // Creating object of LoggingPreferences
+                LoggingPreferences logs = new LoggingPreferences();
+
+                logs.enable(LogType.BROWSER, Level.ALL);
+                logs.enable(LogType.DRIVER, Level.ALL);
+
+                // Setting up the required options
+                options.setCapability("goog:loggingPrefs", logs);
+                options.addArguments("--remote-allow-origins=*");
+
+                System.setProperty(ChromeDriverService.CHROME_DRIVER_LOG_PROPERTY, "build/chromedriver.log");
+
+                // Creating object of ChromeDriver class with options as arugument
+                driver = new ChromeDriver(options);
+
+                // Maximizing the browser window
+                driver.manage().window().maximize();
+
+                // Creating WebDriver object
+                wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+
+                // Creating object of Wrappers class
+                wp = new Wrappers(driver, wait);
+        }
+
         // Quiting the browser
         @AfterTest
         public void endTest() {
